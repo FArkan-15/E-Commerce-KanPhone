@@ -1,0 +1,188 @@
+<script setup>
+import { ref, watch } from 'vue'
+
+const emit = defineEmits(['filter-applied'])
+
+const filters = ref({
+  priceMin: null,
+  priceMax: null,
+  brand: [],
+  features: [],
+  waterproof: null,
+  compatibility: []
+})
+
+const brands = ['Apple', 'Samsung', 'Xiaomi', 'Oppo', 'Vivo', 'Realme', 'Asus', 'Infinix']
+const featureOptions = [
+  { label: 'Heart Rate Monitor', value: 'Heart Rate Monitor' },
+  { label: 'GPS', value: 'GPS' },
+  { label: 'Sleep Tracking', value: 'Sleep Tracking' },
+  { label: 'Blood Oxygen', value: 'Blood Oxygen' }
+]
+const compatibilities = [
+  { label: 'Android', value: 'android' },
+  { label: 'iPhone', value: 'iphone' },
+  { label: 'Universal', value: 'universal' }
+]
+
+watch(filters, (newVal) => {
+  const activeFilters = {}
+  
+  if (newVal.priceMin) activeFilters.price_min = newVal.priceMin
+  if (newVal.priceMax) activeFilters.price_max = newVal.priceMax
+  if (newVal.brand.length > 0) activeFilters.brand = newVal.brand
+  if (newVal.features.length > 0) activeFilters.features = newVal.features
+  if (newVal.waterproof !== null) activeFilters.waterproof = newVal.waterproof
+  if (newVal.compatibility.length > 0) activeFilters.compatibility = newVal.compatibility
+
+  emit('filter-applied', activeFilters)
+}, { deep: true })
+
+const resetFilters = () => {
+  filters.value = {
+    priceMin: null,
+    priceMax: null,
+    brand: [],
+    features: [],
+    waterproof: null,
+    compatibility: []
+  }
+}
+</script>
+
+<template>
+  <div class="w-full md:w-[260px] lg:w-[280px] flex-shrink-0">
+    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm sticky top-24">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-bold text-gray-900">Filter</h2>
+        <button 
+          @click="resetFilters" 
+          class="text-xs font-semibold text-blue-600 hover:text-blue-800"
+        >
+          Reset
+        </button>
+      </div>
+
+      <!-- Price -->
+      <div class="mb-6">
+        <h3 class="font-semibold text-sm mb-3 text-gray-800">Price</h3>
+        <div class="flex items-center gap-2">
+          <div class="relative w-full">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
+            <input 
+              v-model="filters.priceMin" 
+              type="number" 
+              placeholder="Min" 
+              class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+            />
+          </div>
+          <span class="text-gray-400 font-medium">-</span>
+          <div class="relative w-full">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">Rp</span>
+            <input 
+              v-model="filters.priceMax" 
+              type="number" 
+              placeholder="Max" 
+              class="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" 
+            />
+          </div>
+        </div>
+      </div>
+
+      <hr class="border-gray-100 my-5" />
+
+      <!-- Brand -->
+      <div class="mb-6">
+        <h3 class="font-semibold text-sm mb-3 text-gray-800">Brand</h3>
+        <div class="space-y-2.5 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+          <label v-for="brand in brands" :key="brand" class="flex items-center gap-3 cursor-pointer group">
+            <div class="relative flex items-center justify-center">
+              <input 
+                type="checkbox" 
+                :value="brand" 
+                v-model="filters.brand" 
+                class="peer appearance-none w-4 h-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer" 
+              />
+              <svg class="absolute w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ brand }}</span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="border-gray-100 my-5" />
+
+      <!-- Features -->
+      <div class="mb-6">
+        <h3 class="font-semibold text-sm mb-3 text-gray-800">Features</h3>
+        <div class="space-y-2.5 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+          <label v-for="feature in featureOptions" :key="feature.value" class="flex items-center gap-3 cursor-pointer group">
+            <div class="relative flex items-center justify-center">
+              <input 
+                type="checkbox" 
+                :value="feature.value" 
+                v-model="filters.features" 
+                class="peer appearance-none w-4 h-4 rounded border border-gray-300 checked:bg-blue-600 checked:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all cursor-pointer" 
+              />
+              <svg class="absolute w-2.5 h-2.5 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <span class="text-sm text-gray-600 group-hover:text-gray-900 transition-colors">{{ feature.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="border-gray-100 my-5" />
+
+      <!-- Waterproof -->
+      <div class="mb-6">
+        <h3 class="font-semibold text-sm mb-3 text-gray-800">Waterproof</h3>
+        <div class="flex gap-4">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" :value="1" v-model="filters.waterproof" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+            <span class="text-sm text-gray-600">Yes</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="radio" :value="0" v-model="filters.waterproof" class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500" />
+            <span class="text-sm text-gray-600">No</span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="border-gray-100 my-5" />
+
+      <!-- Compatibility -->
+      <div class="mb-2">
+        <h3 class="font-semibold text-sm mb-3 text-gray-800">Compatibility</h3>
+        <div class="flex flex-wrap gap-2">
+          <label v-for="comp in compatibilities" :key="comp.value" class="cursor-pointer">
+            <input type="checkbox" :value="comp.value" v-model="filters.compatibility" class="peer hidden" />
+            <div class="px-3 py-1.5 border border-gray-200 rounded-md text-xs font-medium text-gray-600 peer-checked:bg-blue-50 peer-checked:border-blue-500 peer-checked:text-blue-700 hover:bg-gray-50 transition-all">
+              {{ comp.label }}
+            </div>
+          </label>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 10px;
+}
+.custom-scrollbar:hover::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+}
+</style>

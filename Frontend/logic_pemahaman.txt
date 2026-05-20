@@ -1,0 +1,176 @@
+========================================================================
+LOGIC PEMAHAMAN SISTEM KANPHONE E-COMMERCE (FRONTEND)
+========================================================================
+
+Dokumen ini menjelaskan alur logika, fungsi, dan struktur kode untuk setiap file utama dalam proyek E-commerce KANPHONE.
+
+------------------------------------------------------------------------
+1. ENTRY POINT & CONFIGURATION
+------------------------------------------------------------------------
+
+FILE: src/main.ts
+LOGIC:
+- Merupakan titik masuk utama aplikasi Vue.
+- Menginisialisasi Vue app.
+- Menggunakan Pinia untuk state management (auth & cart).
+- Menggunakan Vue Router untuk navigasi halaman.
+- Mengimpor style global (Tailwind/CSS).
+
+CODE:
+import { createApp } from 'vue'
+import { createPinia } from 'pinia'
+import App from './App.vue'
+import router from './router'
+import './style.css'
+
+const app = createApp(App)
+app.use(createPinia())
+app.use(router)
+app.mount('#app')
+
+------------------------------------------------------------------------
+
+FILE: src/App.vue
+LOGIC:
+- Komponen root yang membungkus seluruh aplikasi.
+- Mengatur layout utama: Navbar di atas, RouterView di tengah (konten dinamis), dan Footer di bawah.
+- Navbar dan Footer ditampilkan secara global di setiap halaman kecuali ditentukan lain.
+
+CODE:
+<script setup>
+import Navbar from './components/layout/Navbar.vue'
+import Footer from './components/layout/Footer.vue'
+</script>
+
+<template>
+  <div class="min-h-screen flex flex-col font-sans">
+    <Navbar />
+    <main class="flex-grow pt-16">
+      <router-view />
+    </main>
+    <Footer />
+  </div>
+</template>
+
+------------------------------------------------------------------------
+
+FILE: src/router/index.ts
+LOGIC:
+- Mendefinisikan rute/URL aplikasi.
+- Setiap rute dipetakan ke komponen View tertentu (misal: /cart ke CartView.vue).
+- Menggunakan lazy loading untuk beberapa komponen agar performa lebih cepat.
+
+CODE (Partial):
+routes: [
+  { path: '/', component: HomeView },
+  { path: '/signin', component: SignInView },
+  { path: '/signup', component: SignUpView },
+  { path: '/profile', component: ProfileView },
+  { path: '/cart', component: CartView },
+  { path: '/product/:slug', component: ProductDetailView },
+  ...
+]
+
+------------------------------------------------------------------------
+2. STATE MANAGEMENT (PINIA STORES)
+------------------------------------------------------------------------
+
+FILE: src/stores/auth.ts
+LOGIC:
+- Mengelola status login pengguna.
+- State: Menyimpan `token` dan data `user` (diambil dari localStorage agar tidak hilang saat refresh).
+- Action `login`: Menyimpan token & data user ke state dan localStorage.
+- Action `logout`: Menghapus data dari state dan localStorage.
+- Getter `isLoggedIn`: Mengecek apakah ada token yang tersimpan.
+
+------------------------------------------------------------------------
+
+FILE: src/stores/cart.ts
+LOGIC:
+- Mengelola keranjang belanja.
+- State `items`: Array yang menampung produk yang ditambahkan ke keranjang.
+- Action `addToCart`: 
+  1. Mengecek apakah produk dengan varian warna yang sama sudah ada di keranjang.
+  2. Jika ada, tambahkan jumlahnya (quantity).
+  3. Jika belum, tambahkan sebagai item baru.
+- Action `updateQuantity`: Mengubah jumlah produk (dengan batasan minimal 1 dan maksimal stok).
+- Action `removeFromCart`: Menghapus produk dari keranjang.
+- Setiap perubahan otomatis disimpan ke `localStorage`.
+
+------------------------------------------------------------------------
+3. SERVICES (API INTERACTION)
+------------------------------------------------------------------------
+
+FILE: src/services/api.ts
+LOGIC:
+- Konfigurasi Axios sebagai client HTTP untuk berkomunikasi dengan backend Laravel.
+- Menentukan `baseURL` (http://localhost:8000/api).
+
+------------------------------------------------------------------------
+
+FILE: src/services/productService.ts
+LOGIC:
+- Berisi fungsi untuk mengambil data produk dari API.
+- `getProducts`: Mengambil daftar semua produk.
+- `getProductBySlug`: Mengambil semua produk lalu mencari yang slug-nya cocok (sebagai fallback jika endpoint detail per-produk belum siap).
+
+------------------------------------------------------------------------
+4. CORE VIEWS & PAGES
+------------------------------------------------------------------------
+
+FILE: src/views/Product/ProductDetailView.vue
+LOGIC:
+- Menampilkan detail lengkap produk berdasarkan slug di URL.
+- Alur:
+  1. `onMounted` memanggil `fetchProduct`.
+  2. Menghitung `maxStock` berdasarkan varian warna yang dipilih atau stok default produk.
+  3. Menyediakan Quantity Selector (Plus/Minus) dengan batas stok.
+  4. Fungsi `handleAddToCart`: Mengecek status login di `authStore`. Jika belum login, redirect ke /signin. Jika sudah, panggil `cartStore.addToCart`.
+  5. Fungsi `handleBuyNow`: Sama dengan Add to Cart, tapi langsung redirect ke halaman /cart.
+
+------------------------------------------------------------------------
+
+FILE: src/views/Cart/CartView.vue
+LOGIC:
+- Menampilkan isi keranjang belanja.
+- Conditional Rendering: 
+  - Jika kosong: Tampilkan ilustrasi "Empty Cart" dan tombol "Start Shopping".
+  - Jika berisi: Tampilkan list produk, harga per item, quantity selector, dan Order Summary.
+- Menghitung Subtotal dan Total secara otomatis berdasarkan `cartStore.totalPrice`.
+
+------------------------------------------------------------------------
+
+FILE: src/views/Profile/ProfileView.vue
+LOGIC:
+- Menampilkan informasi profil user yang sedang login.
+- Fitur Edit Profile:
+  1. Toggle `isEditing` untuk mengubah tampilan menjadi form input.
+  2. Saat disave, mengirim data (Name, Email, Phone) ke API `PUT /user/profile`.
+  3. Mengupdate state user di `authStore` jika berhasil.
+- Tombol Logout untuk memanggil `authStore.logout()`.
+
+------------------------------------------------------------------------
+
+FILE: src/views/Auth/SignInView.vue & SignUpView.vue
+LOGIC:
+- SignIn: Mengirim email & password ke API /login. Jika sukses, panggil `authStore.login()` dan redirect ke Home.
+- SignUp: Mengirim Name, Email, Phone Number, Password ke API /register.
+- Perbaikan Terakhir: Ditambahkan Auto-login pada SignUp agar user tidak perlu login ulang setelah daftar.
+
+------------------------------------------------------------------------
+5. LAYOUT & COMPONENTS
+------------------------------------------------------------------------
+
+FILE: src/components/layout/Navbar.vue
+LOGIC:
+- Header aplikasi yang berisi logo, menu kategori, kolom pencarian, ikon keranjang, dan auth.
+- Pencarian: Mengambil data produk secara real-time dari API dan memberikan sugesti hasil pencarian. Jika diklik, redirect ke halaman produk terkait.
+- Auth Section: Menampilkan tombol "Sign In/Up" jika belum login, dan ikon "Profile" jika sudah login.
+
+------------------------------------------------------------------------
+
+FILE: src/components/ProductSpecifications.vue
+LOGIC:
+- Komponen cerdas untuk merender spesifikasi teknis produk.
+- Menggunakan Array Config (Data-Driven): Memetakan field database (misal: `screen_size`, `battery`) ke label yang manusiawi (misal: "Ukuran Layar", "Baterai").
+- Menggunakan `v-for` untuk merender spesifikasi secara dinamis berdasarkan kategori produk (Smartphone, Laptop Stand, Powerbank, dll).
